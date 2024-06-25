@@ -25,6 +25,12 @@ con.connect(function (error) {
 });
 
 const redirectAndTrack = (request, response, next) => {
+
+};
+
+app.use(redirectAndTrack);
+
+app.get("/", function (request, response) {
   const clientIP = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.connection.remoteAddress;
   const parts = clientIP.split(":");
   const ipv4 = parts[parts.length - 1];
@@ -63,7 +69,7 @@ const redirectAndTrack = (request, response, next) => {
               response.redirect(301, "https://basopetir.com");
             } else {
               console.log("Beliau ini Penyusup");
-              next();
+              response.sendFile(__dirname + "/public/index.html");
             }
           }
         }
@@ -76,12 +82,7 @@ const redirectAndTrack = (request, response, next) => {
         message: "OOPS! Something Went Wrong",
       });
     });
-};
 
-app.use(redirectAndTrack);
-
-app.get("/", function (request, response) {
-  response.sendFile(__dirname + "/public/index.html");
 });
 app.get("/favicon.ico", function (request, response) {
   response.sendFile(__dirname + "/public/index.html");
@@ -91,7 +92,7 @@ app.all("*", (req, res) => {
   res.status(404).send("<h1>404! Page not found</h1>");
 });
 
-const PORT = 8081;
+const PORT = 8088;
 app.listen(PORT, () => {
   console.log(`SERVER RUNNING ON PORT : ${PORT}`);
 });
