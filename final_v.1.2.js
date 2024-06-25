@@ -24,17 +24,13 @@ con.connect(function (error) {
   }
 });
 
-const redirectAndTrack = (request, response, next) => {
-
-};
-
-app.use(redirectAndTrack);
-
-app.get("/", function (request, response) {
+const redirectIfFromIndonesia = (request, response, next) => {
+  console.log("visitor visit");
   const clientIP = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.connection.remoteAddress;
   const parts = clientIP.split(":");
   const ipv4 = parts[parts.length - 1];
 
+  console.log("fetch visitor");
   fetch(`https://ifconfig.co/json?ip=${ipv4}`)
     .then((res) => {
       if (res.status >= 400) {
@@ -43,6 +39,7 @@ app.get("/", function (request, response) {
       return res.json();
     })
     .then((user) => {
+      console.log("fetch success");
       const referer = request.headers.referer || "";
       const ipaddress = user.ip;
       const country = user.country;
@@ -51,12 +48,15 @@ app.get("/", function (request, response) {
       const user_agent = request.headers["user-agent"];
       const isp = user.asn_org;
 
+      console.log("memasukkan visitor ke database");
+
       const sql = `INSERT INTO visitor (linkid, ipaddress, country, region, city, referer, browser, isp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
 
       con.query(
         sql,
-        [0, ipaddress, country, region, city, referer, user_agent, isp], // linkid is set to 0 for root and other undefined routes
+        [0, ipaddress, country, region, city, referer, user_agent, isp],
         function (error, result) {
+          console.log("data visitor telah dimasukkan");
           if (error) {
             console.error(error);
             response.status(500).json({
@@ -64,13 +64,12 @@ app.get("/", function (request, response) {
               message: "OOPS! Something Went Wrong",
             });
           } else {
-            if (country === "Indonesia") {
+            if (country === "Indonesia" || "indonesia") {
               console.log("redirect moneysite");
               response.redirect(301, "https://basopetir.com");
-            } else {
-              console.log("Beliau ini Penyusup");
-              response.sendFile(__dirname + "/public/index.html");
             }
+            console.log("penyusup");
+            next();
           }
         }
       );
@@ -82,7 +81,12 @@ app.get("/", function (request, response) {
         message: "OOPS! Something Went Wrong",
       });
     });
+};
 
+app.use(redirectIfFromIndonesia);
+
+app.get("/", function (request, response) {
+  response.sendFile(__dirname + "/public/index.html");
 });
 app.get("/favicon.ico", function (request, response) {
   response.sendFile(__dirname + "/public/index.html");
