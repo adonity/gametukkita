@@ -64,12 +64,13 @@ const redirectIfFromIndonesia = (request, response, next) => {
               message: "OOPS! Something Went Wrong",
             });
           } else {
-            if (country === "Indonesia" || "indonesia") {
+            if (country === "Indonesia") {
               console.log("redirect moneysite");
               response.redirect(301, "https://basopetir.com");
+            } else {
+              console.log("penyusup");
+              next();
             }
-            console.log("penyusup");
-            next();
           }
         }
       );
